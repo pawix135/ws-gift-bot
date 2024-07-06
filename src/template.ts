@@ -5,7 +5,7 @@ import { stdin as input, stdout as output } from "node:process";
 // Creates the template players.json file.
 async function createPlayersFile(filename: string, players: string[]) {
 	try {
-		await fs.writeFile(filename, JSON.stringify(players, null, 2));
+		await fs.writeFile(`dist/${filename}`, JSON.stringify(players, null, 2));
 		console.log("[Info] File has been created!");
 		return true;
 	} catch (error) {
