@@ -26,7 +26,6 @@ npm run build
 ### Prepare the player id list:
 Inside the `dist` folder create `.json` file. The file should contain an array of player ids as strings. Example:
 ```json
-// player_ids.json
 [
     "player_id_1",
     "player_id_2",
