@@ -137,6 +137,7 @@ async function redeem_code(
 				break;
 			case redeeme_types.server_busy:
 				console.log(`[Info] ${redeeme_types.server_busy}`);
+				await browser.close();
 				await redeem_code(
 					playerId,
 					code,

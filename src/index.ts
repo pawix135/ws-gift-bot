@@ -39,13 +39,7 @@ import shuffle from "lodash.shuffle";
 
 	try {
 		const results = await runBot(shuffle(playerIds), args.values.code);
-
-		const filename =
-			// biome-ignore lint/style/useTemplate: <explanation>
-			args.values.code +
-			"_" +
-			new Date().toISOString().replace(/:/g, "-").replace(/\./g, "-") +
-			".json";
+		const filename = `${args.values.code}_${new Date().toISOString().replace(/:/g, "-").replace(/\./g, "-")}.json`;
 		await fs.writeFile(filename, JSON.stringify(results, null, 2));
 		console.log(`[Info] Saving results to ${filename}`);
 	} catch (error) {
