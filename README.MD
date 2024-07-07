@@ -36,7 +36,7 @@ Inside the `dist` folder create `.json` file. The file should contain an array o
 ### Run the bot:
 ```bash
 cd dist
-node index.js -p player_ids.json -c <your_code>
+node index.js -p <json_file_path> -c <your_code>
 ```
 
 ### How to use the bot:
