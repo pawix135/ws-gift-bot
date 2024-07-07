@@ -23,15 +23,18 @@ export async function runBot(
 	players: string[],
 	code: string,
 ): Promise<RedeemResult[]> {
+	const listLength = players.length;
 	const results: RedeemResult[] = [];
-	try {
-		for (const [index, player] of players.entries()) {
+	for (const [index, player] of players.entries()) {
+		try {
 			console.log(
-				`[Info] Player number ${index + 1} with id ${player} is redeeming the code ${code}!`,
+				`[Info] ${index + 1}/${listLength} with id ${player} is redeeming the code ${code}!`,
 			);
 			results.push(await redeem_code(player, code));
+		} catch (error) {
+			console.log("[Error] Something went wrong while redeeming the code!");
 		}
-	} catch (error) {}
+	}
 	return results;
 }
 
@@ -70,7 +73,7 @@ async function redeem_code(
 		{ delay: 170 },
 	);
 
-	await deley(1000, "User id typed!");
+	await deley(1000);
 
 	await page.waitForSelector(".login_btn");
 	await page.click(".login_btn");
@@ -87,7 +90,7 @@ async function redeem_code(
 		)?.evaluate((el) => el.textContent);
 		result.playerName = playerName;
 	} catch (error) {
-		console.log("[Error] Invalid player id! Skipping...", error);
+		console.log(`[Error] Invalid player id: ${playerId}! Skipping...`);
 		await browser.close();
 		result.message = "Invalid player id!";
 		result.success = false;
@@ -95,7 +98,7 @@ async function redeem_code(
 		return result;
 	}
 
-	await deley(100, "Deley before typing code!");
+	await deley(100);
 
 	await page.type(
 		"#app > div > div > div.exchange_container > div.main_content > div.code_con > div.input_wrap > input[type=text]",
@@ -113,7 +116,7 @@ async function redeem_code(
 		"#app > div > div.message_modal > div.modal_content > div.confirm_btn",
 	);
 
-	await deley(500, "Awaited before clicking confirm!");
+	await deley(500);
 
 	const message: string = await (
 		await page.$("#app > div > div.message_modal > div.modal_content > p")
@@ -154,7 +157,7 @@ async function redeem_code(
 		"#app > div > div.message_modal > div.modal_content > div.confirm_btn",
 	);
 
-	await deley(500, "Awaited before closing browser!");
+	await deley(500);
 	await browser.close();
 
 	return result;
@@ -170,7 +173,24 @@ export async function loadPlayers(filename: string): Promise<string[] | null> {
 		}
 		return playerIds;
 	} catch (error) {
-		console.error("error ", error);
+		const e = error as {
+			errno: number;
+			code: string;
+			path: string;
+			syscall: string;
+		};
+
+		if (error instanceof SyntaxError) {
+			console.error(`[Error] Invalid JSON in file ${filename}!`);
+		}
+
+		if (e.code === "ENOENT" && e.syscall === "open") {
+			console.error(`[Error] File ${filename} not found! Exiting...`);
+		} else {
+			console.error(
+				"[Error] Something went wrong while reading the file! Exiting...",
+			);
+		}
 		return null;
 	}
 }
