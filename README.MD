@@ -42,9 +42,13 @@ node index.js -p <json_file_path> -c <your_code>
 ### How to use the bot:
 Pass two required arguments to the bot:
 
+`-h` or `--help` - optional argument, if present the bot will display help message
+
 `-p` or `--players` - path to the player ids json file
 
 `-c` or `--code` - gift code
+
+`-r` or `--report` - optional argument, if present the bot will generate a report file with the results
 
 Example:
 ```bash
