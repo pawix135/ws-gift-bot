@@ -1,7 +1,6 @@
 import { loadPlayers, runBot } from "./bot";
 import { parseArgs } from "node:util";
 import fs from "node:fs/promises";
-import shuffle from "lodash.shuffle";
 
 (async () => {
 	const args = parseArgs({
@@ -38,7 +37,7 @@ import shuffle from "lodash.shuffle";
 	}
 
 	try {
-		const results = await runBot(shuffle(playerIds), args.values.code);
+		const results = await runBot(playerIds, args.values.code);
 		const filename = `${args.values.code}_${new Date().toISOString().replace(/:/g, "-").replace(/\./g, "-")}.json`;
 		await fs.writeFile(filename, JSON.stringify(results, null, 2));
 		console.log(`[Info] Saving results to ${filename}`);
