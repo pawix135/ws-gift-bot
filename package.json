@@ -4,8 +4,7 @@
 	"main": "index.js",
 	"scripts": {
 		"dev": "nodemon --exec ts-node src/index.ts",
-		"build": "tsc --build --verbose",
-		"template": "node dist/template.js"
+		"build": "webpack"
 	},
 	"keywords": [],
 	"author": "pawix135",
@@ -13,9 +12,14 @@
 	"description": "Whiteout Survivor Auto Gift Bot",
 	"devDependencies": {
 		"@types/node": "^20.14.9",
+		"@types/webpack": "^5.28.5",
 		"nodemon": "^3.1.4",
+		"ts-loader": "^9.5.1",
 		"ts-node": "^10.9.2",
-		"typescript": "^5.5.3"
+		"typescript": "^5.5.3",
+		"webpack": "^5.92.1",
+		"webpack-cli": "^5.1.4",
+		"webpack-node-externals": "^3.0.0"
 	},
 	"dependencies": {
 		"puppeteer": "^22.12.1"
