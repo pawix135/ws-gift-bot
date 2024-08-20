@@ -1,6 +1,6 @@
-import puppeteer from "puppeteer";
+import puppeteer, { type Browser } from "puppeteer";
 import fs from "node:fs/promises";
-import { deley } from "./utils";
+import { deley, makePlayersQueye, sumQueueResults } from "./utils";
 
 export interface RedeemResult {
 	message?: string;
@@ -23,24 +23,50 @@ export async function runBot(
 	players: string[],
 	code: string,
 ): Promise<RedeemResult[]> {
-	const listLength = players.length;
 	const results: RedeemResult[] = [];
-	for (const [index, player] of players.entries()) {
-		try {
-			console.log(
-				`[Info] ${index + 1}/${listLength} with id ${player} is redeeming the code ${code}!`,
-			);
-			results.push(await redeem_code(player, code));
-		} catch (error) {
-			console.log("[Error] Something went wrong while redeeming the code!");
-		}
+
+	// Split the players into batches of 7
+	const queue = makePlayersQueye(players);
+	const queueLength = queue.length;
+
+	// Create a new browser instance
+	const browser = await puppeteer.launch({
+		headless: false,
+		args: ["--window-size=1080,640"],
+	});
+
+	// Loop through the batched players
+	for (const [index, players] of queue.entries()) {
+		console.log(
+			`[Info] Queue ${index + 1}/${queueLength} with ${players.length} players`,
+		);
+		const queue_results = await Promise.all(
+			players.map((p) => redeem_code(p, code, browser)),
+		);
+		results.push(...queue_results);
+
+		//Print the results
+		const sum = sumQueueResults(queue_results);
+		console.log("-----------------------------------");
+		console.log(`[Info] Queue no.${index + 1} done!`);
+		console.log(`[Results] Total: ${sum.total}`);
+		console.log(`[Results] Success: ${sum.success}`);
+		console.log(`[Results] Failed: ${sum.failed}`);
+		console.log("-----------------------------------");
+
+		// Deley before the next batch
+		await deley(3000);
 	}
+
+	await browser.close();
+
 	return results;
 }
 
 async function redeem_code(
 	playerId: string,
 	code: string,
+	browser: Browser,
 	numberOfTries?: number,
 ): Promise<RedeemResult> {
 	const result: RedeemResult = {
@@ -51,15 +77,11 @@ async function redeem_code(
 		playerName: "",
 	};
 
+	// If the retries failed return the result
 	if (numberOfTries && numberOfTries === 3) {
 		result.message = "Tried 3 times!";
 		return result;
 	}
-
-	const browser = await puppeteer.launch({
-		headless: false,
-		args: ["--window-size=1080,640"],
-	});
 
 	const page = await browser.newPage();
 
@@ -67,6 +89,7 @@ async function redeem_code(
 
 	await page.goto("https://wos-giftcode.centurygame.com/");
 
+	// Fill the player id input
 	await page.type(
 		"#app > div > div > div.exchange_container > div.main_content > div.roleId_con > div.roleId_con_top > div.input_wrap > input[type=text]",
 		playerId,
@@ -130,26 +153,27 @@ async function redeem_code(
 		switch (message) {
 			case redeeme_types.already_claimed:
 			case redeeme_types.not_found:
-				console.log(`[Info] ${message}`);
+				console.log(`[Redeeme] ${message}`);
 				result.message = message;
 				break;
 			case redeeme_types.redeemed:
-				console.log(`[Info] ${redeeme_types.redeemed}`);
+				console.log(`[Redeeme] ${redeeme_types.redeemed}`);
 				result.message = redeeme_types.redeemed;
 				result.success = true;
 				break;
 			case redeeme_types.server_busy:
-				console.log(`[Info] ${redeeme_types.server_busy}`);
+				console.log(`[Redeeme] ${redeeme_types.server_busy}`);
 				await browser.close();
 				await redeem_code(
 					playerId,
 					code,
+					browser,
 					numberOfTries ? numberOfTries + 1 : 1,
 				);
 				break;
 			default:
 				result.message = "Unknown message!";
-				console.log("[Info] Unknown message!", message);
+				console.log("[Redeeme] Unknown message!", message);
 		}
 	}
 
@@ -158,7 +182,8 @@ async function redeem_code(
 	);
 
 	await deley(500);
-	await browser.close();
+
+	await page.close();
 
 	return result;
 }
