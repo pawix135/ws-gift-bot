@@ -1,6 +1,7 @@
 import { loadPlayers, runBot } from "./bot";
 import fs from "node:fs/promises";
 import { createCLI } from "./cli";
+import { makePlayersQueye } from "./utils";
 
 (async () => {
 	const { code, help, players, report } = createCLI();
