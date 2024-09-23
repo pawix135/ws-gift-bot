@@ -1,5 +1,6 @@
 const path = require("node:path");
 const nodeExternals = require("webpack-node-externals");
+const CreateFoldersPlugin = require("./webpack/folders-plugin");
 
 module.exports = {
 	mode: "production",
@@ -7,13 +8,13 @@ module.exports = {
 	entry: {
 		main: "./src/index.ts",
 	},
-  externals: [nodeExternals()],
-  externalsPresets: {
-      node: true 
-  },
-  optimization: {
-    minimize: true,
-  },
+	externals: [nodeExternals()],
+	externalsPresets: {
+		node: true,
+	},
+	optimization: {
+		minimize: true,
+	},
 	output: {
 		path: path.resolve(__dirname, "./dist"),
 		filename: "index.js",
@@ -29,4 +30,5 @@ module.exports = {
 			},
 		],
 	},
+	plugins: [new CreateFoldersPlugin()],
 };

@@ -1,5 +1,4 @@
 import puppeteer, { type Browser } from "puppeteer";
-import fs from "node:fs/promises";
 import { deley, makePlayersQueye, sumQueueResults } from "./utils";
 
 export interface RedeemResult {
@@ -17,6 +16,8 @@ const redeeme_types = {
 	not_found: "Gift Code not found!",
 	server_busy: "Server busy. Please try again later.",
 } as const;
+
+const failed_ids: string[] = [];
 
 // Loops through the player ids list and redeem the code for each player
 export async function runBot(
@@ -40,22 +41,38 @@ export async function runBot(
 		console.log(
 			`[Info] Queue ${index + 1}/${queueLength} with ${players.length} players`,
 		);
-		const queue_results = await Promise.all(
-			players.map((p) => redeem_code(p, code, browser)),
-		);
-		results.push(...queue_results);
+		try {
+			const queue_results = await Promise.all(
+				players.map((p) => redeem_code(p, code, browser)),
+			);
 
-		//Print the results
-		const sum = sumQueueResults(queue_results);
-		console.log("-----------------------------------");
-		console.log(`[Info] Queue no.${index + 1} done!`);
-		console.log(`[Results] Total: ${sum.total}`);
-		console.log(`[Results] Success: ${sum.success}`);
-		console.log(`[Results] Failed: ${sum.failed}`);
-		console.log("-----------------------------------");
+			results.push(...queue_results);
 
-		// Deley before the next batch
-		await deley(3000);
+			//Print the results
+			const sum = sumQueueResults(queue_results);
+			console.log("-----------------------------------");
+			console.log(`[Info] Queue no.${index + 1} done!`);
+			console.log(`[Results] Total: ${sum.total}`);
+			console.log(`[Results] Success: ${sum.success}`);
+			console.log(`[Results] Failed: ${sum.failed}`);
+			console.log("-----------------------------------");
+
+			// Deley before the next batch
+			await deley(3000);
+		} catch (error) {
+			console.log("Error while redeeming the code for the player!", error);
+		}
+	}
+
+	console.log("[Info] Failed ids: ", failed_ids);
+
+	if (failed_ids.length > 0) {
+		console.log("[Info] Retrying the failed ids...");
+		try {
+			await Promise.all(failed_ids.map((p) => redeem_code(p, code, browser)));
+		} catch (error) {
+			console.log("Error while redeeming the code for the player!", error);
+		}
 	}
 
 	await browser.close();
@@ -114,14 +131,14 @@ async function redeem_code(
 		result.playerName = playerName;
 	} catch (error) {
 		console.log(`[Error] Invalid player id: ${playerId}! Skipping...`);
-		await browser.close();
+		await page.close();
 		result.message = "Invalid player id!";
 		result.success = false;
 		result.playerName = "";
 		return result;
 	}
 
-	await deley(100);
+	await deley(1000);
 
 	await page.type(
 		"#app > div > div > div.exchange_container > div.main_content > div.code_con > div.input_wrap > input[type=text]",
@@ -163,59 +180,19 @@ async function redeem_code(
 				break;
 			case redeeme_types.server_busy:
 				console.log(`[Redeeme] ${redeeme_types.server_busy}`);
-				await browser.close();
-				await redeem_code(
-					playerId,
-					code,
-					browser,
-					numberOfTries ? numberOfTries + 1 : 1,
-				);
+				result.message = redeeme_types.server_busy;
+				result.success = false;
+				failed_ids.push(playerId);
 				break;
 			default:
 				result.message = "Unknown message!";
+				failed_ids.push(playerId);
 				console.log("[Redeeme] Unknown message!", message);
+				break;
 		}
 	}
-
-	await page.click(
-		"#app > div > div.message_modal > div.modal_content > div.confirm_btn",
-	);
-
-	await deley(500);
 
 	await page.close();
 
 	return result;
-}
-
-// Load the player ids from the file
-export async function loadPlayers(filename: string): Promise<string[] | null> {
-	try {
-		const rawPlayerIds = await fs.readFile(filename, "utf-8");
-		const playerIds = JSON.parse(rawPlayerIds) as string[];
-		if (!Array.isArray(playerIds)) {
-			throw new Error("Players file is not an valid array!");
-		}
-		return playerIds;
-	} catch (error) {
-		const e = error as {
-			errno: number;
-			code: string;
-			path: string;
-			syscall: string;
-		};
-
-		if (error instanceof SyntaxError) {
-			console.error(`[Error] Invalid JSON in file ${filename}!`);
-		}
-
-		if (e.code === "ENOENT" && e.syscall === "open") {
-			console.error(`[Error] File ${filename} not found! Exiting...`);
-		} else {
-			console.error(
-				"[Error] Something went wrong while reading the file! Exiting...",
-			);
-		}
-		return null;
-	}
 }

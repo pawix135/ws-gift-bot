@@ -1,18 +1,16 @@
 import { parseArgs } from "node:util";
 
-export const createCLI = () => {
+export const parseCLI = () => {
 	const cli = parseArgs({
 		args: process.argv.slice(2),
 		options: {
 			players: {
 				type: "string",
-				default: "players.json",
 				multiple: false,
 				short: "p",
 			},
 			code: {
 				type: "string",
-				default: "",
 				multiple: false,
 				short: "c",
 			},
@@ -24,7 +22,7 @@ export const createCLI = () => {
 			},
 			report: {
 				type: "boolean",
-				default: false,
+				default: true,
 				multiple: false,
 				short: "r",
 			},
