@@ -1,0 +1,10 @@
+{
+  "version": "0.0.1",
+  "tasks": {
+    "compile:win": "deno compile -A --target x86_64-pc-windows-msvc --icon icon.ico -o ws-gift-bot_x86_64.exe main.ts"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1",
+    "puppeteer": "npm:puppeteer@^23.8.0"
+  }
+}
