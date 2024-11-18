@@ -67,7 +67,6 @@ export async function loadPlayers(filename: string): Promise<string[] | null> {
 }
 
 export async function loadIds(customPath?: string): Promise<string[] | null> {
-  console.log(typeof customPath, customPath?.length);
   
 	if (typeof customPath === "string") {
 		try {

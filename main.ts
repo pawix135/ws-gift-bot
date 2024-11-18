@@ -1,6 +1,6 @@
 import { runBot } from "./bot/bot.ts";
-import { cliPrompt, parseCLI } from "./bot/cli.ts";
-import { generateRaport, helpMessage, loadIds } from "./bot/utils.ts";
+import { cliPrompt } from "./bot/cli.ts";
+import { generateRaport, loadIds } from "./bot/utils.ts";
 
 const code = await cliPrompt<string>("Enter the gift code: ", "string");
 const players = await cliPrompt<string | undefined>("Enter the path to the file with the player ids: ", "string", true);
@@ -36,6 +36,6 @@ try {
   console.log(
     `[Result]: Failed to redeemed ${failedCount} out of ${total} codes`,
   );
-} catch (error) {
+} catch (_error) {
   console.log("Something went wrong. Exiting...");
 }
